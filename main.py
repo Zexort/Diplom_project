@@ -1,7 +1,5 @@
 import torch
 import cv2 as cv
-import math
-import numpy as np
 from sort import *
 
 
@@ -12,7 +10,7 @@ class CoinDetection:
     All methods will be upgrade in the future
     """
 
-    def initialize_model(model):
+    def initialize_model(self):
         """
         This is method that initialize the model
         """
@@ -22,16 +20,16 @@ class CoinDetection:
 
         return model
 
-    def get_video(video):
+    def get_video(self):
         """
         This method is preparing video writer
         Default file extension is 'mp4'
         """
-        video = cv.VideoCapture('test.mkv')
+        video = cv.VideoCapture('test.mp4')
 
         return video
 
-    def get_writer(writer):
+    def get_writer(self):
         fourcc = cv.VideoWriter_fourcc('m', 'p', '4', 'v')
         fps = 30
         dimension = (1280, 720)
@@ -56,7 +54,7 @@ class CoinDetection:
                                      detections.xyxy[0]]  # Getting bbox coordinates from tensor
 
             # Part of the code that preparing data for tracker
-            if not normalized_detections:
+            if normalized_detections == []:
                 mot_data = np.empty((0, 5))
             else:
                 mot_data = np.array(normalized_detections)
@@ -71,7 +69,7 @@ class CoinDetection:
                 start_point = (int(subject[0]), int(subject[1]))
                 end_point = (int(subject[2]), int(subject[3]))
                 diametr = int(subject[3]) - int(subject[1])  # coin diametr
-                id = subject[8]
+                id = subject[4]
                 cv.rectangle(frame, start_point, end_point, (0, 0, 255), thickness)
                 cv.putText(frame, str(int(diametr)), start_point, cv.FONT_HERSHEY_COMPLEX_SMALL, 1, (0, 255, 0),
                            thickness)
@@ -80,6 +78,7 @@ class CoinDetection:
 
             frame = cv.cvtColor(frame, cv.COLOR_RGB2BGR)
             writer.write(frame)
+
         writer.release()
 
 
