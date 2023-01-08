@@ -29,7 +29,7 @@ class CoinDetection:
 
         return video
 
-    def cuda_available(self, model):
+    def cuda_available(self):
         """
         if cuda available use gpu('cuda:0')
         else use cpu('cpu')
@@ -50,8 +50,7 @@ class CoinDetection:
         mot_tracker = Sort()  # Initialize multi object tracker
         thickness = 2  # Thickness of the all bbox lines and displayed numbers
         model = self.initialize_model()
-        device = self.cuda_available(model)
-        model.to(device)
+        model.to(self.cuda_available())
         video = self.get_video()
         writer = self.get_writer()
 
@@ -65,13 +64,13 @@ class CoinDetection:
                                      detections.xyxy[0]]  # Getting bbox coordinates from tensor
 
             # Part of the code that preparing data for tracker
-            if normalized_detections == []:
+            if not normalized_detections:
                 mot_data = np.empty((0, 5))
             else:
                 mot_data = np.array(normalized_detections)
             track_bbs_ids = mot_tracker.update(mot_data)
 
-            for subject in track_bbs_ids:  # (x1, y1, x2, y2. id)
+            for subject in track_bbs_ids:  # (x1, y1, x2, y2, id)
                 start_point = (int(subject[0]), int(subject[1]))
                 end_point = (int(subject[2]), int(subject[3]))
                 diametr = int(subject[3]) - int(subject[1])  # coin diametr
@@ -89,11 +88,8 @@ class CoinDetection:
 
 
 # TODO:
-# Попробовать убрать проверку на пустой массив с боксами
-# На выводе выходит битый видос, нужен фикс
-# В телеге скинул тестовый видос, он будет прогоняться как тест модели
 # Допилить детекцию чтобы она различала номиналы по цветам (мб попробовать через яркость, либо же через hsv)
-#
+
 
 if __name__ == '__main__':
     cls = CoinDetection()
