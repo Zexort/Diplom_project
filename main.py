@@ -16,7 +16,7 @@ class CoinDetection:
         """
 
         model = torch.hub.load('WongKinYiu/yolov7', 'custom',
-                               path_or_model='best.pt')  # Main branch CUSTOM model of WongKinYiu YOLOV7
+                               path_or_model='best.pt')  # Main branch CUSTOM model of WongKinYiu YOLO7
 
         return model
 
@@ -28,6 +28,15 @@ class CoinDetection:
         video = cv.VideoCapture('test.mp4')
 
         return video
+
+    def cuda_available(self, model):
+        """
+        if cuda available use gpu('cuda:0')
+        else use cpu('cpu')
+        """
+        device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+
+        return device
 
     def get_writer(self):
         fourcc = cv.VideoWriter_fourcc('m', 'p', '4', 'v')
@@ -41,6 +50,8 @@ class CoinDetection:
         mot_tracker = Sort()  # Initialize multi object tracker
         thickness = 2  # Thickness of the all bbox lines and displayed numbers
         model = self.initialize_model()
+        device = self.cuda_available(model)
+        model.to(device)
         video = self.get_video()
         writer = self.get_writer()
 
@@ -60,12 +71,7 @@ class CoinDetection:
                 mot_data = np.array(normalized_detections)
             track_bbs_ids = mot_tracker.update(mot_data)
 
-            if len(track_bbs_ids) == 0:  # if no detections
-                frame = cv.cvtColor(frame, cv.COLOR_RGB2BGR)
-                writer.write(frame)
-                continue
-
-            for subject in track_bbs_ids:  # (x1, y1, x2, y2) and [8] = unique number of detected object
+            for subject in track_bbs_ids:  # (x1, y1, x2, y2. id)
                 start_point = (int(subject[0]), int(subject[1]))
                 end_point = (int(subject[2]), int(subject[3]))
                 diametr = int(subject[3]) - int(subject[1])  # coin diametr
