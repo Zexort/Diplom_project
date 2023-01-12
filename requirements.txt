@@ -11,3 +11,6 @@ scipy>=1.4.1
 tqdm>=4.41.0
 protobuf<4.21.3
 # pytorch from official site with cuda(for faster work)
+tensorboard>=2.4.1
+pandas>=1.1.4
+seaborn>=0.11.0
