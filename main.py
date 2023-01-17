@@ -16,18 +16,9 @@ class CoinDetection:
         """
 
         model = torch.hub.load('WongKinYiu/yolov7', 'custom',
-                               path_or_model='best.pt')  # Main branch CUSTOM model of WongKinYiu YOLO7
+                               path_or_model='best.pt', source="local")  # Main branch CUSTOM model of WongKinYiu YOLO7
 
         return model
-
-    def get_video(self):
-        """
-        This method is preparing video writer
-        Default file extension is 'mp4'
-        """
-        video = cv.VideoCapture('test.mp4')
-
-        return video
 
     def cuda_available(self):
         """
@@ -46,14 +37,12 @@ class CoinDetection:
 
         return writer
 
-    def coin_detection(self):
-        mot_tracker = Sort()  # Initialize multi object tracker
-        thickness = 2  # Thickness of the all bbox lines and displayed numbers
-        model = self.initialize_model()
-        model.to(self.cuda_available())
-        video = self.get_video()
-        writer = self.get_writer()
-
+    def video_detections(self, media, model, thickness, writer, mot_tracker):
+        """
+        Multi detection for video files
+        """
+        video = input("Enter video file name: ")
+        video = cv.VideoCapture(video)
         while video.isOpened():
             ret, frame = video.read()  # getting frames from video stream
             if not ret:  # Check for existing frames
@@ -86,9 +75,52 @@ class CoinDetection:
 
         writer.release()
 
+        return "DONE"
+
+    def image_detections(self, model, media, thickness, mot_tracker):
+        """
+        Multi detections for image
+        """
+        img = "test.png"
+        detections = model(img)
+        normalized_detections = [t.cpu().numpy() for t in
+                                 detections.xyxy[0]]  # Getting bbox coordinates from tensor
+
+        mot_data = np.array(normalized_detections)
+        track_bbs_ids = mot_tracker.update(mot_data)
+
+        for subject in track_bbs_ids:  # (x1, y1, x2, y2, id)
+            start_point = (int(subject[0]), int(subject[1]))
+            end_point = (int(subject[2]), int(subject[3]))
+            diametr = int(subject[3]) - int(subject[1])  # coin diametr
+            id = subject[4]
+            cv.rectangle(img, start_point, end_point, (0, 0, 255), thickness)
+            cv.putText(img, str(int(diametr)), start_point, cv.FONT_HERSHEY_COMPLEX_SMALL, 1, (0, 255, 0),
+                       thickness)
+            cv.putText(img, str(int(id)), (int(subject[2]), int(subject[1])), cv.FONT_HERSHEY_COMPLEX_SMALL, 1,
+                       (255, 0, 0), thickness)
+        cv.imshow("results", media)
+        cv.waitKey(0)
+        cv.destroyAllWindows()
+
+        return "DONE"
+
+    def coin_detection(self):
+        mot_tracker = Sort()  # Initialize multi object tracker
+        thickness = 2  # Thickness of the all bbox lines and displayed numbers
+        model = self.initialize_model()
+        model.to(self.cuda_available())
+        media = input("Enter file extension: ")
+        writer = self.get_writer()
+
+        if media == "mp4":
+            self.video_detections(thickness, model, media, writer, mot_tracker)
+        else:
+            self.image_detections(thickness, model, media, mot_tracker)
 
 # TODO:
 # Допилить детекцию чтобы она различала номиналы по цветам (мб попробовать через яркость, либо же через hsv)
+# fix image_detection
 
 
 if __name__ == '__main__':
