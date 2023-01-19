@@ -11,6 +11,7 @@ class CoinDetection:
     It includes multi object tracking and display results on the screen
     All methods will be upgrade in the future
     """
+
     def initialize_model(self):
         """
         This is method that initialize the model
@@ -130,7 +131,7 @@ class CoinDetection:
         __videoExtensionType__ = ["mkv", "mp4", "avi", "webm"]
 
         thickness = int(input("Write line thickness from 1 to 3"
-                             " (2 strongly recommend): "))  # Thickness of the all bbox lines and displayed numbers
+                              " (2 strongly recommend): "))  # Thickness of the all bbox lines and displayed numbers
         media = input("Enter file name: ")
         media_ext = media.split('.')[-1]
 
