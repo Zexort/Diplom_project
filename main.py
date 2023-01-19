@@ -1,5 +1,7 @@
 import torch
 import cv2 as cv
+
+import main
 from sort import *
 
 
@@ -9,15 +11,21 @@ class CoinDetection:
     It includes multi object tracking and display results on the screen
     All methods will be upgrade in the future
     """
-    __extensionType__ = {1: "jpg"}
-
     def initialize_model(self):
         """
         This is method that initialize the model
         """
-
-        model = torch.hub.load('WongKinYiu/yolov7', 'custom',
-                               path_or_model='best.pt', source="local")  # Main branch CUSTOM model of WongKinYiu YOLO7
+        try:
+            model = torch.hub.load('WongKinYiu/', 'custom',
+                                   path_or_model='best.pt',
+                                   source="local")  # Main branch CUSTOM model of WongKinYiu YOLO7
+        except FileNotFoundError:
+            from git.repo.base import Repo
+            print("Yolov7 is not installed. Cloning yolov7 from github")
+            Repo.clone_from("https://github.com/WongKinYiu/yolov7", "WongKinYiu/")
+            print("Done")
+            model = torch.hub.load('WongKinYiu/', 'custom',
+                                   path_or_model='best.pt', source="local")
 
         return model
 
@@ -38,15 +46,15 @@ class CoinDetection:
 
         return writer
 
-    def video_detections(self, thickness):
+    def video_detections(self, thickness, media):
         """
         Multi detection for video files
         """
+        video = media
         model = self.initialize_model()
         model.to(self.cuda_available())
         writer = self.get_writer()
         mot_tracker = Sort()
-        video = input("Enter video file name: ")
         video = cv.VideoCapture(video)
         while video.isOpened():
             ret, frame = video.read()  # getting frames from video stream
@@ -67,11 +75,14 @@ class CoinDetection:
             for subject in track_bbs_ids:  # (x1, y1, x2, y2, id)
                 start_point = (int(subject[0]), int(subject[1]))
                 end_point = (int(subject[2]), int(subject[3]))
-                diametr = int(subject[3]) - int(subject[1])  # coin diametr
+                width = (int(subject[3]) - int(subject[1]))  # coin width ||| 55px = 2cm
+                ratio_px_mm = 0.275
+                # 20mm / 55px
+                mm = width / ratio_px_mm
+                cm = mm / 100
                 id = subject[4]
                 cv.rectangle(frame, start_point, end_point, (0, 0, 255), thickness)
-                cv.putText(frame, str(int(diametr)), start_point, cv.FONT_HERSHEY_COMPLEX_SMALL, 1, (0, 255, 0),
-                           thickness)
+                cv.putText(frame, f"{round(cm, 2)} CM", start_point, cv.FONT_HERSHEY_COMPLEX_SMALL, 1, (0, 255, 0), 2)
                 cv.putText(frame, str(int(id)), (int(subject[2]), int(subject[1])), cv.FONT_HERSHEY_COMPLEX_SMALL, 1,
                            (255, 0, 0), thickness)
 
@@ -80,17 +91,14 @@ class CoinDetection:
 
         writer.release()
 
-        return "DONE"
-
-    def image_detections(self, thickness):
+    def image_detections(self, thickness, media):
         """
         Multi detections for image
         """
         mot_tracker = Sort()
         model = self.initialize_model()
         model.to(self.cuda_available())
-        img = "test.png"
-        img = cv.imread(img)
+        img = cv.imread(media)
         img = cv.cvtColor(img, cv.COLOR_BGR2RGB)
         detections = model(img)
         normalized_detections = [t.cpu().numpy() for t in
@@ -102,11 +110,14 @@ class CoinDetection:
         for subject in track_bbs_ids:  # (x1, y1, x2, y2, id)
             start_point = (int(subject[0]), int(subject[1]))
             end_point = (int(subject[2]), int(subject[3]))
-            diametr = int(subject[3]) - int(subject[1])  # coin diametr
+            width = (int(subject[3]) - int(subject[1]))  # coin width ||| 55px = 2cm
+            ratio_px_mm = 0.275
+            # 20mm / 55px
+            mm = width / ratio_px_mm
+            cm = mm / 100
             id = subject[4]
             cv.rectangle(img, start_point, end_point, (0, 0, 255), thickness)
-            cv.putText(img, str(int(diametr)), start_point, cv.FONT_HERSHEY_COMPLEX_SMALL, 1, (0, 255, 0),
-                       thickness)
+            cv.putText(img, f"{round(cm, 2)} CM", start_point, cv.FONT_HERSHEY_COMPLEX_SMALL, 1, (0, 255, 0), 1)
             cv.putText(img, str(int(id)), (int(subject[2]), int(subject[1])), cv.FONT_HERSHEY_COMPLEX_SMALL, 1,
                        (255, 0, 0), thickness)
         img = cv.cvtColor(img, cv.COLOR_RGB2BGR)
@@ -114,21 +125,25 @@ class CoinDetection:
         cv.waitKey(0)
         cv.destroyAllWindows()
 
-        return 0
+    def main(self):
+        __pictureExtensionType__ = ["png", "jpg", "jpeg"]
+        __videoExtensionType__ = ["mkv", "mp4", "avi", "webm"]
 
-    def coin_detection(self):
-        thickness = 2  # Thickness of the all bbox lines and displayed numbers
-        media = input("Enter file extension: ")
-        if media == "mp4":
-            self.video_detections(thickness)
-        else:
-            self.image_detections(thickness)
+        thickness = int(input("Write line thickness from 1 to 3"
+                             " (2 strongly recommend): "))  # Thickness of the all bbox lines and displayed numbers
+        media = input("Enter file name: ")
+        media_ext = media.split('.')[-1]
+
+        if media_ext in __videoExtensionType__:
+            self.video_detections(thickness, media)
+        if media_ext in __pictureExtensionType__:
+            self.image_detections(thickness, media)
+
 
 # TODO:
-# Допилить детекцию чтобы она различала номиналы по цветам (мб попробовать через яркость, либо же через hsv)
-# fix image_detection
+# Допилить детекцию чтобы она различала номиналы по цветам (попробовать через hsv)
 
 
 if __name__ == '__main__':
     cls = CoinDetection()
-    cls.coin_detection()
+    cls.main()
