@@ -9,6 +9,7 @@ class CoinDetection:
     It includes multi object tracking and display results on the screen
     All methods will be upgrade in the future
     """
+    __extensionType__ = {1: "jpg"}
 
     def initialize_model(self):
         """
@@ -37,10 +38,14 @@ class CoinDetection:
 
         return writer
 
-    def video_detections(self, media, model, thickness, writer, mot_tracker):
+    def video_detections(self, thickness):
         """
         Multi detection for video files
         """
+        model = self.initialize_model()
+        model.to(self.cuda_available())
+        writer = self.get_writer()
+        mot_tracker = Sort()
         video = input("Enter video file name: ")
         video = cv.VideoCapture(video)
         while video.isOpened():
@@ -77,11 +82,16 @@ class CoinDetection:
 
         return "DONE"
 
-    def image_detections(self, model, media, thickness, mot_tracker):
+    def image_detections(self, thickness):
         """
         Multi detections for image
         """
+        mot_tracker = Sort()
+        model = self.initialize_model()
+        model.to(self.cuda_available())
         img = "test.png"
+        img = cv.imread(img)
+        img = cv.cvtColor(img, cv.COLOR_BGR2RGB)
         detections = model(img)
         normalized_detections = [t.cpu().numpy() for t in
                                  detections.xyxy[0]]  # Getting bbox coordinates from tensor
@@ -99,24 +109,20 @@ class CoinDetection:
                        thickness)
             cv.putText(img, str(int(id)), (int(subject[2]), int(subject[1])), cv.FONT_HERSHEY_COMPLEX_SMALL, 1,
                        (255, 0, 0), thickness)
-        cv.imshow("results", media)
+        img = cv.cvtColor(img, cv.COLOR_RGB2BGR)
+        cv.imshow("results", img)
         cv.waitKey(0)
         cv.destroyAllWindows()
 
-        return "DONE"
+        return 0
 
     def coin_detection(self):
-        mot_tracker = Sort()  # Initialize multi object tracker
         thickness = 2  # Thickness of the all bbox lines and displayed numbers
-        model = self.initialize_model()
-        model.to(self.cuda_available())
         media = input("Enter file extension: ")
-        writer = self.get_writer()
-
         if media == "mp4":
-            self.video_detections(thickness, model, media, writer, mot_tracker)
+            self.video_detections(thickness)
         else:
-            self.image_detections(thickness, model, media, mot_tracker)
+            self.image_detections(thickness)
 
 # TODO:
 # Допилить детекцию чтобы она различала номиналы по цветам (мб попробовать через яркость, либо же через hsv)
