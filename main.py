@@ -84,7 +84,7 @@ class CoinDetection:
                 id = subject[4]
                 cv.rectangle(frame, start_point, end_point, (0, 0, 255), thickness)
                 cv.putText(frame, f"{round(cm, 2)} CM", start_point, cv.FONT_HERSHEY_COMPLEX_SMALL, 1, (0, 255, 0), 2)
-                cv.putText(frame, str(int(id)), (int(subject[2]), int(subject[1])), cv.FONT_HERSHEY_COMPLEX_SMALL, 1,
+                cv.putText(frame, str(int(id)), (int(subject[2]), int(subject[3])), cv.FONT_HERSHEY_COMPLEX_SMALL, 1,
                            (255, 0, 0), thickness)
 
             frame = cv.cvtColor(frame, cv.COLOR_RGB2BGR)
@@ -118,7 +118,7 @@ class CoinDetection:
             id = subject[4]
             cv.rectangle(img, start_point, end_point, (0, 0, 255), thickness)
             cv.putText(img, f"{round(cm, 2)} CM", start_point, cv.FONT_HERSHEY_COMPLEX_SMALL, 1, (0, 255, 0), 1)
-            cv.putText(img, str(int(id)), (int(subject[2]), int(subject[1])), cv.FONT_HERSHEY_COMPLEX_SMALL, 1,
+            cv.putText(img, str(int(id)), (int(subject[2]), int(subject[3])), cv.FONT_HERSHEY_COMPLEX_SMALL, 1,
                        (255, 0, 0), thickness)
         img = cv.cvtColor(img, cv.COLOR_RGB2BGR)
         cv.imshow("results", img)
@@ -132,11 +132,11 @@ class CoinDetection:
         thickness = int(input("Write line thickness from 1 to 3"
                               " (2 strongly recommend): "))  # Thickness of the all bbox lines and displayed numbers
         media = input("Enter file name: ")
-        media_ext = media.split('.')[-1]
+        media_extension = media.split('.')[-1]
 
-        if media_ext in __videoExtensionType__:
+        if media_extension in __videoExtensionType__:
             self.video_detections(thickness, media)
-        if media_ext in __pictureExtensionType__:
+        if media_extension in __pictureExtensionType__:
             self.image_detections(thickness, media)
 
 
