@@ -1,7 +1,5 @@
 import torch
 import cv2 as cv
-
-import main
 from sort import *
 
 
