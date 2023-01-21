@@ -113,7 +113,6 @@ class CoinDetection:
             end_point = (int(subject[2]), int(subject[3]))
             width = (int(subject[3]) - int(subject[1]))  # coin width ||| 55px = 2cm
             ratio_px_mm = 0.275
-            # 20mm / 55px
             mm = width / ratio_px_mm
             cm = mm / 100
             id = subject[4]
