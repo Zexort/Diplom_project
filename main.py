@@ -138,10 +138,6 @@ class CoinDetection:
             self.image_detections(thickness, media)
 
 
-# TODO:
-# Допилить детекцию чтобы она различала номиналы по цветам (попробовать через hsv)
-
-
 if __name__ == '__main__':
     cls = CoinDetection()
     cls.main()
